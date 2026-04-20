@@ -1,9 +1,11 @@
 import streamDeck, {
   action,
-  KeyDownEvent,
-  WillAppearEvent,
-  DialRotateEvent,
-  DialDownEvent,
+  type KeyAction,
+  type DialAction,
+  type KeyDownEvent,
+  type WillAppearEvent,
+  type DialRotateEvent,
+  type DialDownEvent,
   SingletonAction,
 } from "@elgato/streamdeck";
 
@@ -12,10 +14,10 @@ import { Viewport } from "./viewport.js";
 import { ButtonRenderer } from "./button-renderer.js";
 import { KnobHandler } from "./knob-handler.js";
 import {
-  Composition,
-  ThumbnailDirtyEvent,
-  ClipConnectionEvent,
-  ConnectedState,
+  type Composition,
+  type ThumbnailDirtyEvent,
+  type ClipConnectionEvent,
+  type ConnectedState,
 } from "./types.js";
 
 // ── Shared singletons ────────────────────────────────────────────────────────
@@ -25,32 +27,43 @@ const viewport = new Viewport(4, 2);
 const renderer = new ButtonRenderer();
 const knobHandler = new KnobHandler(viewport, client);
 
-// Track which action contexts map to which button indices so we can update
-// the right button when Resolume sends events.
-const contextMap = new Map<number, string>(); // buttonIndex → context id
+// Map buttonIndex → live action object so Resolume events can push image updates
+// without holding stale context IDs.
+const actionMap = new Map<number, KeyAction | DialAction>();
 
-// Clip state cache: "{layer}:{clip}" → connected state
+// Clip connection state cache: "{layer}:{clip}" → ConnectedState
 const clipState = new Map<string, ConnectedState>();
 
 let composition: Composition | null = null;
-let isConnected = false;
+let resolumeConnected = false;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Coordinate helpers ────────────────────────────────────────────────────────
+
+/** Extract button index from a WillAppear payload, which may be multi-action. */
+function buttonIndexFromWillAppear(ev: WillAppearEvent): number | null {
+  // Multi-action slots have no grid coordinates
+  if (ev.payload.isInMultiAction) return null;
+  const { row, column } = ev.payload.coordinates;
+  return row * viewport.gridWidth + column;
+}
+
+// ── Cell rendering ────────────────────────────────────────────────────────────
 
 async function renderCell(
   buttonIndex: number,
-  context: string
+  action: KeyAction | DialAction
 ): Promise<void> {
   const layer = viewport.layerForButton(buttonIndex);
   const clip = viewport.clipForButton(buttonIndex);
 
   if (!layer || !clip || !composition) {
-    await setButtonImage(context, await renderer.renderClip({
+    const image = await renderer.renderClip({
       thumb: null,
       clipName: "",
       isConnected: false,
       isEmpty: true,
-    }));
+    });
+    await action.setImage(`data:image/png;base64,${image}`);
     return;
   }
 
@@ -66,7 +79,7 @@ async function renderCell(
     try {
       thumb = await client.getThumbnail(layer, clip);
     } catch {
-      // Thumbnail unavailable — render without
+      // Thumbnail unavailable — render without it
     }
   }
 
@@ -77,55 +90,41 @@ async function renderCell(
     isEmpty,
   });
 
-  await setButtonImage(context, image);
+  await action.setImage(`data:image/png;base64,${image}`);
 }
 
 async function renderAllVisible(): Promise<void> {
   const cells = viewport.getVisibleCells();
   await Promise.all(
     cells.map(({ buttonIndex, layer, clip }) => {
-      const ctx = contextMap.get(buttonIndex);
-      if (!ctx) return Promise.resolve();
-      // Pre-populate clip state from composition data
-      const layerData = composition?.layers[layer - 1];
-      const clipData = layerData?.clips[clip - 1];
+      const act = actionMap.get(buttonIndex);
+      if (!act) return Promise.resolve();
+      // Pre-populate connection state from composition snapshot
+      const clipData = composition?.layers[layer - 1]?.clips[clip - 1];
       if (clipData?.connected?.value) {
         clipState.set(`${layer}:${clip}`, clipData.connected.value);
       }
-      return renderCell(buttonIndex, ctx);
+      return renderCell(buttonIndex, act);
     })
   );
 }
 
-async function setButtonImage(context: string, base64Png: string): Promise<void> {
-  await streamDeck.ui.current?.setImage(
-    `data:image/png;base64,${base64Png}`,
-    { target: 0 }
-  );
-  // Fallback: use the action API directly via context
-  streamDeck.actions.getActionById(context)?.setImage(
-    `data:image/png;base64,${base64Png}`
-  );
-}
-
-async function showConnectionStatus(connected: boolean): Promise<void> {
-  const ctx = contextMap.get(0);
-  if (!ctx) return;
+async function showConnectionBanner(connected: boolean): Promise<void> {
+  const act = actionMap.get(0);
+  if (!act) return;
   const image = await renderer.renderClip({
     thumb: null,
     clipName: connected ? "LIVE" : "OFFLINE",
     isConnected: connected,
     isEmpty: false,
   });
-  streamDeck.actions.getActionById(ctx)?.setImage(
-    `data:image/png;base64,${image}`
-  );
+  await act.setImage(`data:image/png;base64,${image}`);
 }
 
 // ── Resolume event handlers ───────────────────────────────────────────────────
 
 client.on("connectionChange", async (connected: boolean) => {
-  isConnected = connected;
+  resolumeConnected = connected;
   console.log(`[plugin] Resolume ${connected ? "connected" : "disconnected"}`);
 
   if (connected) {
@@ -140,34 +139,37 @@ client.on("connectionChange", async (connected: boolean) => {
       console.error("[plugin] Failed to load composition:", err);
     }
   } else {
-    await showConnectionStatus(false);
+    await showConnectionBanner(false);
   }
 });
 
 client.on("thumbnailDirty", async ({ layer, clip }: ThumbnailDirtyEvent) => {
-  const cells = viewport.getVisibleCells();
-  const cell = cells.find((c) => c.layer === layer && c.clip === clip);
+  const cell = viewport.getVisibleCells().find(
+    (c) => c.layer === layer && c.clip === clip
+  );
   if (!cell) return;
-  const ctx = contextMap.get(cell.buttonIndex);
-  if (ctx) await renderCell(cell.buttonIndex, ctx);
+  const act = actionMap.get(cell.buttonIndex);
+  if (act) await renderCell(cell.buttonIndex, act);
 });
 
 client.on("clipConnected", async ({ layer, clip, connected }: ClipConnectionEvent) => {
   clipState.set(`${layer}:${clip}`, connected);
-  const cells = viewport.getVisibleCells();
-  const cell = cells.find((c) => c.layer === layer && c.clip === clip);
+  const cell = viewport.getVisibleCells().find(
+    (c) => c.layer === layer && c.clip === clip
+  );
   if (!cell) return;
-  const ctx = contextMap.get(cell.buttonIndex);
-  if (ctx) await renderCell(cell.buttonIndex, ctx);
+  const act = actionMap.get(cell.buttonIndex);
+  if (act) await renderCell(cell.buttonIndex, act);
 });
 
 client.on("clipDisconnected", async ({ layer, clip, connected }: ClipConnectionEvent) => {
   clipState.set(`${layer}:${clip}`, connected);
-  const cells = viewport.getVisibleCells();
-  const cell = cells.find((c) => c.layer === layer && c.clip === clip);
+  const cell = viewport.getVisibleCells().find(
+    (c) => c.layer === layer && c.clip === clip
+  );
   if (!cell) return;
-  const ctx = contextMap.get(cell.buttonIndex);
-  if (ctx) await renderCell(cell.buttonIndex, ctx);
+  const act = actionMap.get(cell.buttonIndex);
+  if (act) await renderCell(cell.buttonIndex, act);
 });
 
 viewport.on("changed", () => {
@@ -181,32 +183,30 @@ viewport.on("changed", () => {
 @action({ UUID: "com.yourname.resolume-grid.clip" })
 class ResolumeClipAction extends SingletonAction {
   override async onWillAppear(ev: WillAppearEvent): Promise<void> {
-    // Determine button index from the action's coordinates
-    const { coordinates } = ev.action.getSettings<{ coordinates?: { row: number; column: number } }>();
-    // Stream Deck provides coordinates via payload
-    const row = (ev.payload as { coordinates?: { row: number; column: number } }).coordinates?.row ?? 0;
-    const col = (ev.payload as { coordinates?: { row: number; column: number } }).coordinates?.column ?? 0;
-    const buttonIndex = row * viewport.gridWidth + col;
+    const buttonIndex = buttonIndexFromWillAppear(ev);
+    if (buttonIndex === null) return; // ignore multi-action slots
 
-    contextMap.set(buttonIndex, ev.action.id);
+    // Store the live action reference — 2.x action objects are stable while visible
+    actionMap.set(buttonIndex, ev.action as KeyAction | DialAction);
 
-    if (!isConnected) {
+    if (!resolumeConnected) {
       client.connect();
     }
 
-    await renderCell(buttonIndex, ev.action.id);
+    await renderCell(buttonIndex, ev.action as KeyAction | DialAction);
   }
 
   override async onKeyDown(ev: KeyDownEvent): Promise<void> {
-    const row = (ev.payload as { coordinates?: { row: number; column: number } }).coordinates?.row ?? 0;
-    const col = (ev.payload as { coordinates?: { row: number; column: number } }).coordinates?.column ?? 0;
-    const buttonIndex = row * viewport.gridWidth + col;
+    // KeyAction.coordinates is undefined only for multi-action — skip those
+    const coords = ev.action.coordinates;
+    if (!coords) return;
 
+    const buttonIndex = coords.row * viewport.gridWidth + coords.column;
     const layer = viewport.layerForButton(buttonIndex);
     const clip = viewport.clipForButton(buttonIndex);
     if (!layer || !clip) return;
 
-    // Update opacity dial target to clicked layer
+    // Sync opacity dial target to the layer that was clicked
     knobHandler.setOpacityTargetLayer(layer);
 
     try {
@@ -217,13 +217,14 @@ class ResolumeClipAction extends SingletonAction {
   }
 
   override async onDialRotate(ev: DialRotateEvent): Promise<void> {
-    const { index, ticks } = ev.payload as { index: number; ticks: number };
-    await knobHandler.onDialRotate(index, ticks);
+    // coordinates.column is the dial index (0–3) on Stream Deck +
+    const dialIndex = ev.payload.coordinates.column;
+    await knobHandler.onDialRotate(dialIndex, ev.payload.ticks);
   }
 
   override async onDialDown(ev: DialDownEvent): Promise<void> {
-    const { index } = ev.payload as { index: number };
-    await knobHandler.onDialPress(index);
+    const dialIndex = ev.payload.coordinates.column;
+    await knobHandler.onDialPress(dialIndex);
   }
 }
 
