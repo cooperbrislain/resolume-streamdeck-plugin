@@ -180,7 +180,7 @@ viewport.on("changed", () => {
 
 // ── Stream Deck action ────────────────────────────────────────────────────────
 
-@action({ UUID: "com.yourname.resolume-grid.clip" })
+@action({ UUID: "com.cooperbrislain.resolume-grid.clip" })
 class ResolumeClipAction extends SingletonAction {
   override async onWillAppear(ev: WillAppearEvent): Promise<void> {
     const buttonIndex = buttonIndexFromWillAppear(ev);

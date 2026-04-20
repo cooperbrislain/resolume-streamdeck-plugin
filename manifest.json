@@ -7,7 +7,7 @@
   "CategoryIcon": "imgs/category-icon",
   "CodePath": "dist/plugin.js",
   "Icon": "imgs/plugin-icon",
-  "URL": "https://github.com/yourname/resolume-streamdeck",
+  "URL": "https://github.com/cooperbrislain/resolume-streamdeck",
   "SDKVersion": 2,
   "Software": {
     "MinimumVersion": "6.4"
@@ -20,7 +20,7 @@
   "Actions": [
     {
       "Name": "Resolume Clip",
-      "UUID": "com.yourname.resolume-grid.clip",
+      "UUID": "com.cooperbrislain.resolume-grid.clip",
       "Icon": "imgs/action-icon",
       "SupportedInMultiActions": false,
       "Controllers": ["Keypad", "Encoder"],
