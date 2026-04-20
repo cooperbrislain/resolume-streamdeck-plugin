@@ -1,67 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── canvas mock ───────────────────────────────────────────────────────────────
-// Avoid native node-canvas dependency in tests; the mock tracks which drawing
-// operations were called so we can assert on rendering decisions.
+// Avoid native node-canvas dependency in tests. Plain vi.fn() mocks are used
+// so TypeScript can infer the concrete return type from makeCtx() directly —
+// passing an implementation to vi.fn(impl) narrows generics in ways that
+// conflict with the ReturnType<typeof vi.fn> annotation.
 
-interface DrawCall {
-  method: string;
-  args: unknown[];
-}
-
-type MockCtx = {
-  calls: DrawCall[];
-  fillStyle: string;
-  strokeStyle: string;
-  lineWidth: number;
-  font: string;
-  textBaseline: string;
-  textAlign: string;
-  _measureWidthPerChar: number;
-  fillRect: ReturnType<typeof vi.fn>;
-  strokeRect: ReturnType<typeof vi.fn>;
-  beginPath: ReturnType<typeof vi.fn>;
-  arc: ReturnType<typeof vi.fn>;
-  fill: ReturnType<typeof vi.fn>;
-  fillText: ReturnType<typeof vi.fn>;
-  measureText: ReturnType<typeof vi.fn>;
-  drawImage: ReturnType<typeof vi.fn>;
-};
-
-function makeCtx(widthPerChar = 7): MockCtx {
-  const calls: DrawCall[] = [];
-  const record =
-    (method: string) =>
-    (...args: unknown[]) => {
-      calls.push({ method, args });
-    };
-
-  const ctx: MockCtx = {
-    calls,
+function makeCtx(widthPerChar = 7) {
+  return {
     fillStyle: "",
     strokeStyle: "",
     lineWidth: 0,
     font: "",
     textBaseline: "",
     textAlign: "",
-    _measureWidthPerChar: widthPerChar,
-    fillRect: vi.fn(record("fillRect")),
-    strokeRect: vi.fn(record("strokeRect")),
-    beginPath: vi.fn(record("beginPath")),
-    arc: vi.fn(record("arc")),
-    fill: vi.fn(record("fill")),
-    fillText: vi.fn(record("fillText")),
-    drawImage: vi.fn(record("drawImage")),
-    measureText: vi.fn((text: string) => ({
-      width: text.length * widthPerChar,
-    })),
+    fillRect:   vi.fn(),
+    strokeRect: vi.fn(),
+    beginPath:  vi.fn(),
+    arc:        vi.fn(),
+    fill:       vi.fn(),
+    fillText:   vi.fn(),
+    drawImage:  vi.fn(),
+    measureText: vi.fn((text: string) => ({ width: text.length * widthPerChar })),
   };
-
-  return ctx;
 }
 
 // Shared mock state — reset between tests
-let mockCtx: MockCtx;
+let mockCtx: ReturnType<typeof makeCtx>;
 let lastDataUrl = "data:image/png;base64,FAKEDATA";
 
 vi.mock("canvas", () => ({
@@ -118,11 +83,7 @@ describe("background", () => {
     await r.renderClip({ thumb: null, clipName: "", isConnected: false, isEmpty: true });
     // First fillRect call is the background
     const firstFill = mockCtx.fillRect.mock.calls[0];
-    expect(mockCtx.fillStyle).toBeDefined();
-    // After drawBackground completes, fillStyle was set to #1a1a1a then fillRect called
-    const bgCalls = mockCtx.calls.filter((c) => c.method === "fillRect");
-    // We can't inspect fillStyle at call-time with a plain mock, so instead check
-    // that fillRect(0, 0, 120, 120) was called (covers the full canvas)
+    // Check that fillRect(0, 0, 120, 120) was called (covers the full canvas)
     expect(firstFill).toEqual([0, 0, 120, 120]);
   });
 
