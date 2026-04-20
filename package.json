@@ -1,0 +1,21 @@
+{
+  "name": "resolume-streamdeck-plugin",
+  "version": "0.1.0",
+  "description": "Stream Deck plugin for Resolume Arena/Avenue — live clip thumbnails and triggering",
+  "main": "dist/plugin.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "dev": "tsc && node dist/plugin.js"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^0.4.0",
+    "canvas": "^2.11.2",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.4.0"
+  }
+}

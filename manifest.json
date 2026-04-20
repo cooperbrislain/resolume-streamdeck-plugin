@@ -1,0 +1,46 @@
+{
+  "Name": "Resolume Grid",
+  "Version": "0.1.0",
+  "Author": "Your Name",
+  "Description": "Live clip thumbnails and triggering for Resolume Arena/Avenue on Stream Deck",
+  "Category": "Resolume",
+  "CategoryIcon": "imgs/category-icon",
+  "CodePath": "dist/plugin.js",
+  "Icon": "imgs/plugin-icon",
+  "URL": "https://github.com/yourname/resolume-streamdeck",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.4"
+  },
+  "OS": [
+    { "Platform": "mac", "MinimumVersion": "10.15" },
+    { "Platform": "windows", "MinimumVersion": "10" }
+  ],
+  "Profiles": [],
+  "Actions": [
+    {
+      "Name": "Resolume Clip",
+      "UUID": "com.yourname.resolume-grid.clip",
+      "Icon": "imgs/action-icon",
+      "SupportedInMultiActions": false,
+      "Controllers": ["Keypad", "Encoder"],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Scroll clips / layers",
+          "Push": "Reset opacity",
+          "Touch": "Trigger clip",
+          "LongTouch": "Reset viewport"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/action-icon",
+          "TitleAlignment": "bottom",
+          "FontSize": "10"
+        }
+      ],
+      "PropertyInspectorPath": "property-inspector/index.html"
+    }
+  ]
+}
