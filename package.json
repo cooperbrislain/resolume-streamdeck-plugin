@@ -6,7 +6,10 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "dev": "tsc && node dist/plugin.js"
+    "dev": "tsc && node dist/plugin.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@elgato/streamdeck": "^0.4.0",
@@ -16,6 +19,8 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/ws": "^8.5.10",
-    "typescript": "^5.4.0"
+    "@vitest/coverage-v8": "^1.5.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0"
   }
 }
