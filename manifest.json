@@ -1,26 +1,29 @@
 {
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "UUID": "com.cooperbrislain.resolume-grid",
   "Name": "Resolume Grid",
-  "Version": "0.1.0",
-  "Author": "Your Name",
+  "Version": "0.1.0.0",
+  "Author": "Cooper Brislain",
   "Description": "Live clip thumbnails and triggering for Resolume Arena/Avenue on Stream Deck",
   "Category": "Resolume",
   "CategoryIcon": "imgs/category-icon",
   "CodePath": "dist/plugin.js",
   "Icon": "imgs/plugin-icon",
-  "URL": "https://github.com/cooperbrislain/resolume-streamdeck",
   "SDKVersion": 2,
   "Software": {
     "MinimumVersion": "6.4"
+  },
+  "Nodejs": {
+    "Version": "20"
   },
   "OS": [
     { "Platform": "mac", "MinimumVersion": "10.15" },
     { "Platform": "windows", "MinimumVersion": "10" }
   ],
-  "Profiles": [],
   "Actions": [
     {
-      "Name": "Resolume Clip",
       "UUID": "com.cooperbrislain.resolume-grid.clip",
+      "Name": "Resolume Clip",
       "Icon": "imgs/action-icon",
       "SupportedInMultiActions": false,
       "Controllers": ["Keypad", "Encoder"],
