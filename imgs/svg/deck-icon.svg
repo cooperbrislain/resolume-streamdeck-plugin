@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <!-- Deck Navigator: stacked deck cards with arrows -->
+  <g fill="#ffffff">
+    <rect x="24" y="46" width="96" height="18" rx="4" opacity="0.4"/>
+    <rect x="24" y="70" width="96" height="18" rx="4"/>
+    <rect x="24" y="94" width="96" height="18" rx="4" opacity="0.4"/>
+  </g>
+  <!-- left/right chevrons indicating navigation -->
+  <g fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 22 26 L 14 34 L 22 42"/>
+    <path d="M 122 26 L 130 34 L 122 42"/>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <!-- Layer Navigator: stacked translucent layers with up/down chevrons -->
+  <g>
+    <rect x="28" y="38" width="88" height="22" rx="4" fill="#ffffff" opacity="0.35"/>
+    <rect x="28" y="62" width="88" height="22" rx="4" fill="#ffffff"/>
+    <rect x="28" y="86" width="88" height="22" rx="4" fill="#ffffff" opacity="0.35"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 64 26 L 72 18 L 80 26"/>
+    <path d="M 64 120 L 72 128 L 80 120"/>
+  </g>
+</svg>

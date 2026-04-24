@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Resolume Clip</title>
+  <link rel="stylesheet" href="shared/pi.css" />
+</head>
+<body>
+  <div class="section">
+    <h3>Layer</h3>
+    <label>
+      <select id="layerSelect">
+        <option value="selected">Currently selected in Resolume</option>
+      </select>
+      <span class="hint" id="layerHint">Connect to Resolume to see layer names.</span>
+    </label>
+  </div>
+
+  <div class="section">
+    <h3>Deck</h3>
+    <label>
+      <select id="deckSelect">
+        <option value="current">Current Deck</option>
+      </select>
+      <span class="hint">Pin this button to a specific deck, or follow the active deck.</span>
+    </label>
+  </div>
+
+  <div class="section">
+    <h3>Deck Column</h3>
+    <label>
+      Column within deck
+      <input type="number" id="deckColumn" min="1" max="255" value="1" />
+      <span class="hint">Which clip column (1, 2, 3…) to show.</span>
+    </label>
+  </div>
+
+  <div class="section">
+    <h3>Quick Bind</h3>
+    <button id="bind-btn" class="btn">Bind to selected</button>
+    <span class="hint" id="bind-hint" style="display:block;margin-top:6px;">Select a clip in Resolume, then click to pin this key to it.</span>
+  </div>
+
+  <div class="section">
+    <h3>Resolume Connection</h3>
+    <div class="status-row">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Not connected</span>
+      <button id="refresh-btn" class="btn-secondary">↺ Refresh</button>
+    </div>
+  </div>
+
+  <script src="shared/pi-core.js"></script>
+  <script src="clip.js"></script>
+</body>
+</html>

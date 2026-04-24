@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <!-- Resolume Grid plugin icon: 3x3 grid of rounded clip cells with one accent -->
+  <rect width="144" height="144" rx="28" fill="#1a1a1a"/>
+  <g>
+    <!-- row 1 -->
+    <rect x="22" y="22" width="28" height="28" rx="5" fill="#4a4a4a"/>
+    <rect x="58" y="22" width="28" height="28" rx="5" fill="#4a4a4a"/>
+    <rect x="94" y="22" width="28" height="28" rx="5" fill="#4a4a4a"/>
+    <!-- row 2 (accent = playing) -->
+    <rect x="22" y="58" width="28" height="28" rx="5" fill="#4a4a4a"/>
+    <rect x="58" y="58" width="28" height="28" rx="5" fill="#c3ff00"/>
+    <rect x="94" y="58" width="28" height="28" rx="5" fill="#4a4a4a"/>
+    <!-- row 3 -->
+    <rect x="22" y="94" width="28" height="28" rx="5" fill="#4a4a4a"/>
+    <rect x="58" y="94" width="28" height="28" rx="5" fill="#4a4a4a"/>
+    <rect x="94" y="94" width="28" height="28" rx="5" fill="#4a4a4a"/>
+  </g>
+</svg>

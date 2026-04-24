@@ -94,7 +94,7 @@ describe("WebSocket connection", () => {
   it("connects to the correct WebSocket URL", () => {
     const client = new ResolumeClient({ host: "localhost", port: 8080 });
     client.connect();
-    expect(wsInstances[0].url).toBe("ws://localhost:8080/api/v1/websocket");
+    expect(wsInstances[0].url).toBe("ws://localhost:8080/api/v1");
   });
 
   it("emits connectionChange(true) on open", () => {
@@ -210,6 +210,24 @@ describe("reconnect backoff", () => {
 
 // ── WebSocket event parsing ───────────────────────────────────────────────────
 
+// Helper: build a minimal mock composition with known param IDs.
+function makeComposition(
+  layers: Array<Array<{ connectedId: number; thumbnailId: number }>>
+) {
+  return {
+    layers: layers.map((clips) => ({
+      id: 0,
+      name: { value: "Layer" },
+      clips: clips.map(({ connectedId, thumbnailId }) => ({
+        id: 0,
+        name: { value: "Clip" },
+        connected: { value: "Disconnected" as const, id: connectedId },
+        thumbnail: { id: thumbnailId, path: "/api/v1/composition/thumbnail/dummy" },
+      })),
+    })),
+  };
+}
+
 describe("WebSocket event: thumbnailDirty", () => {
   function connectedClient() {
     const client = new ResolumeClient({ host: "localhost", port: 8080 });
@@ -220,17 +238,50 @@ describe("WebSocket event: thumbnailDirty", () => {
 
   it("emits thumbnailDirty with correct layer+clip", () => {
     const client = connectedClient();
+    // layer 3, clip 7 → thumbnailId=1001
+    const comp = makeComposition([
+      Array.from({ length: 7 }, (_, i) =>
+        i === 6
+          ? { connectedId: 2000, thumbnailId: 1001 }
+          : { connectedId: 9000 + i, thumbnailId: 9100 + i }
+      ),
+      [],
+      Array.from({ length: 7 }, (_, i) =>
+        i === 6
+          ? { connectedId: 3000, thumbnailId: 1001 }
+          : { connectedId: 8000 + i, thumbnailId: 8100 + i }
+      ),
+    ]);
+    // Use layer index 2 (3rd layer, 1-based = 3), clip index 6 (7th, 1-based = 7)
+    const simpleComp = makeComposition([
+      [{ connectedId: 9001, thumbnailId: 9101 }],
+      [{ connectedId: 9002, thumbnailId: 9102 }],
+      [
+        { connectedId: 9003, thumbnailId: 9103 },
+        { connectedId: 9004, thumbnailId: 9104 },
+        { connectedId: 9005, thumbnailId: 9105 },
+        { connectedId: 9006, thumbnailId: 9106 },
+        { connectedId: 9007, thumbnailId: 9107 },
+        { connectedId: 9008, thumbnailId: 9108 },
+        { connectedId: 9009, thumbnailId: 1001 }, // layer 3, clip 7
+      ],
+    ]);
+    client.indexComposition(simpleComp);
+
     const spy = vi.fn();
     client.on("thumbnailDirty", spy);
-    wsInstances[0].message({ path: "/composition/layers/3/clips/7/thumbnail" });
+    wsInstances[0].message({ type: "parameter_update", id: 1001, value: "new" });
     expect(spy).toHaveBeenCalledWith({ layer: 3, clip: 7 });
   });
 
-  it("does not emit thumbnailDirty for unrelated paths", () => {
+  it("does not emit thumbnailDirty for unregistered param IDs", () => {
     const client = connectedClient();
+    const comp = makeComposition([[{ connectedId: 100, thumbnailId: 200 }]]);
+    client.indexComposition(comp);
+
     const spy = vi.fn();
     client.on("thumbnailDirty", spy);
-    wsInstances[0].message({ path: "/composition/layers/3/clips/7/connected" });
+    wsInstances[0].message({ type: "parameter_update", id: 999, value: "new" });
     expect(spy).not.toHaveBeenCalled();
   });
 
@@ -247,6 +298,25 @@ describe("WebSocket event: clipConnected", () => {
     const client = new ResolumeClient({ host: "localhost", port: 8080 });
     client.connect();
     wsInstances[0].open();
+    // layer 1 clip 1 → connectedId=101, thumbnailId=201
+    // layer 2 clip 5 → connectedId=205, thumbnailId=305
+    // layer 4 clip 2 → connectedId=402, thumbnailId=502
+    const comp = makeComposition([
+      [{ connectedId: 101, thumbnailId: 201 }],
+      [
+        { connectedId: 9001, thumbnailId: 9001 },
+        { connectedId: 9002, thumbnailId: 9002 },
+        { connectedId: 9003, thumbnailId: 9003 },
+        { connectedId: 9004, thumbnailId: 9004 },
+        { connectedId: 205, thumbnailId: 305 },
+      ],
+      [{ connectedId: 9010, thumbnailId: 9010 }],
+      [
+        { connectedId: 9011, thumbnailId: 9011 },
+        { connectedId: 402, thumbnailId: 502 },
+      ],
+    ]);
+    client.indexComposition(comp);
     return client;
   }
 
@@ -254,10 +324,7 @@ describe("WebSocket event: clipConnected", () => {
     const client = connectedClient();
     const spy = vi.fn();
     client.on("clipConnected", spy);
-    wsInstances[0].message({
-      path: "/composition/layers/2/clips/5/connected",
-      value: "Connected",
-    });
+    wsInstances[0].message({ type: "parameter_update", id: 205, value: "Connected" });
     expect(spy).toHaveBeenCalledWith({ layer: 2, clip: 5, connected: "Connected" });
   });
 
@@ -265,21 +332,23 @@ describe("WebSocket event: clipConnected", () => {
     const client = connectedClient();
     const spy = vi.fn();
     client.on("clipConnected", spy);
-    wsInstances[0].message({
-      path: "/composition/layers/1/clips/1/connected",
-      value: "Previewing",
-    });
+    wsInstances[0].message({ type: "parameter_update", id: 101, value: "Previewing" });
     expect(spy).toHaveBeenCalledWith({ layer: 1, clip: 1, connected: "Previewing" });
+  });
+
+  it("emits clipConnected when state is Connected & previewing", () => {
+    const client = connectedClient();
+    const spy = vi.fn();
+    client.on("clipConnected", spy);
+    wsInstances[0].message({ type: "parameter_update", id: 101, value: "Connected & previewing" });
+    expect(spy).toHaveBeenCalledWith({ layer: 1, clip: 1, connected: "Connected & previewing" });
   });
 
   it("emits clipDisconnected when state is Disconnected", () => {
     const client = connectedClient();
     const spy = vi.fn();
     client.on("clipDisconnected", spy);
-    wsInstances[0].message({
-      path: "/composition/layers/4/clips/2/connected",
-      value: "Disconnected",
-    });
+    wsInstances[0].message({ type: "parameter_update", id: 402, value: "Disconnected" });
     expect(spy).toHaveBeenCalledWith({ layer: 4, clip: 2, connected: "Disconnected" });
   });
 
@@ -287,7 +356,7 @@ describe("WebSocket event: clipConnected", () => {
     const client = connectedClient();
     const spy = vi.fn();
     client.on("clipDisconnected", spy);
-    wsInstances[0].message({ path: "/composition/layers/1/clips/1/connected" });
+    wsInstances[0].message({ type: "parameter_update", id: 101 });
     expect(spy).toHaveBeenCalledWith({ layer: 1, clip: 1, connected: "Disconnected" });
   });
 });
@@ -337,8 +406,11 @@ describe("thumbnail cache", () => {
     client.connect();
     wsInstances[0].open();
 
+    const comp = makeComposition([[{ connectedId: 100, thumbnailId: 700 }]]);
+    client.indexComposition(comp);
+
     await client.getThumbnail(1, 1); // populates cache
-    wsInstances[0].message({ path: "/composition/layers/1/clips/1/thumbnail" });
+    wsInstances[0].message({ type: "parameter_update", id: 700, value: "new" });
     await client.getThumbnail(1, 1); // should re-fetch
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -352,9 +424,15 @@ describe("thumbnail cache", () => {
     client.connect();
     wsInstances[0].open();
 
+    const comp = makeComposition([[
+      { connectedId: 100, thumbnailId: 701 }, // clip 1
+      { connectedId: 101, thumbnailId: 702 }, // clip 2
+    ]]);
+    client.indexComposition(comp);
+
     await client.getThumbnail(1, 1); // cached
     await client.getThumbnail(1, 2); // cached
-    wsInstances[0].message({ path: "/composition/layers/1/clips/1/thumbnail" });
+    wsInstances[0].message({ type: "parameter_update", id: 701, value: "new" });
 
     await client.getThumbnail(1, 1); // re-fetched
     await client.getThumbnail(1, 2); // still cached
@@ -403,63 +481,11 @@ describe("triggerClip", () => {
   });
 });
 
-describe("setLayerOpacity", () => {
-  it("PUTs clamped value to the correct URL", async () => {
-    fetchMock.mockResolvedValueOnce(mockOkJson({}));
+describe("setLayerParam", () => {
+  it("throws if composition hasn't been indexed yet", async () => {
     const client = new ResolumeClient({ host: "localhost", port: 8080 });
-    await client.setLayerOpacity(3, 0.75);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/v1/composition/layers/3/video/opacity",
-      expect.objectContaining({
-        method: "PUT",
-        body: JSON.stringify({ value: 0.75 }),
-      })
+    await expect(client.setLayerParam(1, "opacity", 0.5)).rejects.toThrow(
+      /no param id indexed/,
     );
-  });
-
-  it("clamps opacity above 1 to 1", async () => {
-    fetchMock.mockResolvedValueOnce(mockOkJson({}));
-    const client = new ResolumeClient({ host: "localhost", port: 8080 });
-    await client.setLayerOpacity(1, 1.5);
-
-    const call = fetchMock.mock.calls[0];
-    const body = JSON.parse((call[1] as RequestInit).body as string);
-    expect(body.value).toBe(1);
-  });
-
-  it("clamps opacity below 0 to 0", async () => {
-    fetchMock.mockResolvedValueOnce(mockOkJson({}));
-    const client = new ResolumeClient({ host: "localhost", port: 8080 });
-    await client.setLayerOpacity(1, -0.5);
-
-    const call = fetchMock.mock.calls[0];
-    const body = JSON.parse((call[1] as RequestInit).body as string);
-    expect(body.value).toBe(0);
-  });
-
-  it("throws on HTTP error", async () => {
-    fetchMock.mockResolvedValueOnce(mockError(400));
-    const client = new ResolumeClient({ host: "localhost", port: 8080 });
-    await expect(client.setLayerOpacity(1, 0.5)).rejects.toThrow("400");
-  });
-});
-
-describe("getLayerOpacity", () => {
-  it("GETs the correct URL and returns value", async () => {
-    fetchMock.mockResolvedValueOnce(mockOkJson({ value: 0.6 }));
-    const client = new ResolumeClient({ host: "localhost", port: 8080 });
-    const result = await client.getLayerOpacity(2);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/v1/composition/layers/2/video/opacity"
-    );
-    expect(result).toBe(0.6);
-  });
-
-  it("throws on HTTP error", async () => {
-    fetchMock.mockResolvedValueOnce(mockError(500));
-    const client = new ResolumeClient({ host: "localhost", port: 8080 });
-    await expect(client.getLayerOpacity(1)).rejects.toThrow("500");
   });
 });

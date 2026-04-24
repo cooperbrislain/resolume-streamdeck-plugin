@@ -29,7 +29,7 @@ function makeCtx(widthPerChar = 7) {
 let mockCtx: ReturnType<typeof makeCtx>;
 let lastDataUrl = "data:image/png;base64,FAKEDATA";
 
-vi.mock("canvas", () => ({
+vi.mock("@napi-rs/canvas", () => ({
   createCanvas: vi.fn(() => ({
     getContext: vi.fn(() => mockCtx),
     toDataURL: vi.fn(() => lastDataUrl),
@@ -171,7 +171,7 @@ describe("thumbnail rendering", () => {
   });
 
   it("silently skips thumbnail if loadImage throws", async () => {
-    const { loadImage } = await import("canvas");
+    const { loadImage } = await import("@napi-rs/canvas");
     vi.mocked(loadImage).mockRejectedValueOnce(new Error("bad image"));
     const r = new ButtonRenderer();
     // Should not throw

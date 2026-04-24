@@ -1,0 +1,12 @@
+2026-04-23T03:58:40.871Z ERROR Process encountered uncaught exception 
+RangeError: Invalid WebSocket frame: invalid status code 1006
+    at Receiver.controlMessage (/Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/ws/lib/receiver.js:626:30)
+    at Receiver.getData (/Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/ws/lib/receiver.js:477:12)
+    at Receiver.startLoop (/Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/ws/lib/receiver.js:167:16)
+    at Receiver._write (/Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/ws/lib/receiver.js:94:10)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+    at Writable.write (node:internal/streams/writable:510:10)
+    at Socket.socketOnData (/Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/ws/lib/websocket.js:1360:35)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)

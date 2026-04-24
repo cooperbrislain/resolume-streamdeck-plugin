@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <!-- Parameter knob: outer ring with value arc and indicator dot -->
+  <circle cx="72" cy="72" r="44" fill="none" stroke="#ffffff" stroke-width="6" opacity="0.35"/>
+  <!-- Arc from 135° to 45° (sweeping through top), showing ~70% value -->
+  <path d="M 40.9 103.1 A 44 44 0 1 1 110.5 94.0"
+        fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <!-- Indicator tick -->
+  <line x1="72" y1="36" x2="72" y2="54" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="72" cy="72" r="6" fill="#ffffff"/>
+</svg>

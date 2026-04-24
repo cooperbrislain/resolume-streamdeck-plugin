@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Parameter</title>
+  <link rel="stylesheet" href="shared/pi.css" />
+</head>
+<body>
+  <div class="section">
+    <h3>Parameter Source</h3>
+    <div class="toggle-row">
+      <button id="btn-composition" class="active" onclick="setSource('composition')">Dashboard</button>
+      <button id="btn-layer"       onclick="setSource('layer')">Layer</button>
+      <button id="btn-clip"        onclick="setSource('clip')">Clip</button>
+    </div>
+
+    <!-- Dashboard params -->
+    <div id="composition-section">
+      <label>Dashboard parameter
+        <select id="paramId">
+          <option value="">— Unassigned —</option>
+        </select>
+      </label>
+      <p class="hint" id="param-hint"></p>
+    </div>
+
+    <!-- Layer params -->
+    <div id="layer-section" style="display:none">
+      <label>Layer
+        <select id="layerIndex">
+          <option value="0">Currently selected in Resolume</option>
+        </select>
+      </label>
+      <label>Parameter
+        <select id="layerParam">
+          <optgroup label="Video">
+            <option value="opacity">Opacity / Alpha</option>
+            <option value="transition_duration">Transition Duration</option>
+          </optgroup>
+          <optgroup label="Audio">
+            <option value="volume">Volume (dB)</option>
+          </optgroup>
+        </select>
+      </label>
+      <p class="hint" id="layer-hint"></p>
+    </div>
+
+    <!-- Clip params -->
+    <div id="clip-section" style="display:none">
+      <label>Layer
+        <select id="clipLayerIndex">
+          <option value="1">Layer 1</option>
+        </select>
+      </label>
+      <label style="flex-direction:row; align-items:center; gap:6px; margin-bottom:4px;">
+        <input type="checkbox" id="clipUsePlaying" style="width:auto; margin:0;" />
+        <span>Currently playing clip on this layer</span>
+      </label>
+      <label>Clip
+        <input type="number" id="clipIndex" placeholder="1" min="1" max="255" value="1" />
+      </label>
+      <label>Parameter
+        <select id="clipParam">
+          <optgroup label="Transport">
+            <option value="speed">Speed</option>
+            <option value="position">Scrub / Position</option>
+          </optgroup>
+          <optgroup label="Video">
+            <option value="opacity">Opacity / Alpha</option>
+          </optgroup>
+          <optgroup label="Audio">
+            <option value="volume">Volume</option>
+          </optgroup>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Sensitivity</h3>
+    <label>
+      <div class="range-row">
+        <input type="range" id="sensitivity" min="0.1" max="5" step="0.1" value="1" />
+        <span class="range-value" id="sensitivityValue">1.0×</span>
+      </div>
+      <span class="hint">Higher = faster sweep. Lower = finer control.</span>
+    </label>
+  </div>
+
+  <div class="section">
+    <h3>Resolume Connection</h3>
+    <div class="status-row">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Not connected</span>
+    </div>
+  </div>
+
+  <script src="shared/pi-core.js"></script>
+  <script src="link.js"></script>
+</body>
+</html>

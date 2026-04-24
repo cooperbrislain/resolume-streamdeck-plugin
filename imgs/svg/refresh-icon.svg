@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <!-- Circular refresh arrow -->
+  <g fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Arc: ~300° open at the top-right for the arrowhead gap -->
+    <path d="M 100 34 A 44 44 0 1 0 116 72"/>
+    <!-- Arrowhead -->
+    <path d="M 100 34 L 86 40 M 100 34 L 104 50"/>
+  </g>
+</svg>

@@ -1,20 +1,55 @@
 {
   "name": "resolume-streamdeck-plugin",
-  "version": "0.1.0",
-  "description": "Stream Deck plugin for Resolume Arena/Avenue — live clip thumbnails and triggering",
+  "version": "0.3.0",
+  "description": "Stream Deck plugin for Resolume Arena/Avenue — live clip thumbnails, deck/layer navigation, and parameter control.",
   "type": "module",
   "main": "dist/plugin.js",
+  "author": {
+    "name": "Cooper Brislain",
+    "email": "cbrislain@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cooperbrislain/resolume-streamdeck-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cooperbrislain/resolume-streamdeck-plugin/issues"
+  },
+  "homepage": "https://github.com/cooperbrislain/resolume-streamdeck-plugin#readme",
+  "keywords": [
+    "streamdeck",
+    "stream-deck",
+    "elgato",
+    "resolume",
+    "resolume-arena",
+    "resolume-avenue",
+    "vj",
+    "visuals",
+    "live-performance"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist",
+    "com.cooperbrislain.resolume-grid.sdPlugin",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
     "dev": "tsc && node dist/plugin.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "pack": "streamdeck pack . --force",
+    "release": "npm run build && npm test && npm prune --omit=dev && streamdeck pack . --force && npm install"
   },
   "dependencies": {
     "@elgato/streamdeck": "^2.1.0",
-    "canvas": "^2.11.2",
+    "@napi-rs/canvas": "^0.1.99",
     "ws": "^8.16.0"
   },
   "devDependencies": {

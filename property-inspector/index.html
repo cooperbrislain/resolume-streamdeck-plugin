@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Resolume Grid Settings</title>
+  <title>Resolume Settings</title>
   <style>
     :root {
       --bg: #1e1e1e;
@@ -42,8 +42,8 @@
       font-size: 12px;
       color: var(--text);
     }
-    input[type="text"],
-    input[type="number"] {
+    input[type="number"],
+    select {
       background: var(--input-bg);
       border: 1px solid var(--border);
       border-radius: 4px;
@@ -52,7 +52,8 @@
       font-size: 12px;
       width: 100%;
     }
-    input:focus {
+    select option { background: var(--input-bg); }
+    input:focus, select:focus {
       outline: none;
       border-color: var(--accent);
     }
@@ -63,42 +64,49 @@
       margin-top: 4px;
     }
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: #555;
     }
     .status-dot.connected { background: var(--accent); }
     #status-text { font-size: 11px; color: #888; }
+    .hint { font-size: 11px; color: #666; margin-top: 4px; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
+  <!-- Keypad button settings -->
+  <div id="keypad-section" class="section" hidden>
+    <h3>Clip</h3>
+    <label>
+      Layer (row)
+      <input type="number" id="layer" placeholder="1" min="1" max="64" />
+    </label>
+    <label>
+      Clip (column)
+      <input type="number" id="clip" placeholder="1" min="1" max="255" />
+    </label>
+  </div>
+
+  <!-- Encoder (dial) settings -->
+  <div id="encoder-section" class="section" hidden>
+    <h3>Dial Assignment</h3>
+    <label>
+      Dashboard parameter
+      <select id="paramId">
+        <option value="">— Unassigned —</option>
+      </select>
+    </label>
+    <p class="hint" id="param-hint"></p>
+  </div>
+
+  <!-- Connection status (always visible) -->
   <div class="section">
     <h3>Resolume Connection</h3>
-    <label>
-      Host
-      <input type="text" id="host" placeholder="localhost" />
-    </label>
-    <label>
-      Port
-      <input type="number" id="port" placeholder="8080" min="1" max="65535" />
-    </label>
     <div class="status-row">
       <div class="status-dot" id="status-dot"></div>
       <span id="status-text">Not connected</span>
     </div>
-  </div>
-
-  <div class="section">
-    <h3>Grid Layout</h3>
-    <label>
-      Columns (clips)
-      <input type="number" id="gridWidth" placeholder="4" min="1" max="8" />
-    </label>
-    <label>
-      Rows (layers)
-      <input type="number" id="gridHeight" placeholder="2" min="1" max="4" />
-    </label>
   </div>
 
   <script src="inspector.js"></script>

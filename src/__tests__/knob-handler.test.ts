@@ -1,205 +1,164 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { EventEmitter } from "events";
 import { KnobHandler } from "../knob-handler.js";
-import type { Viewport } from "../viewport.js";
 import type { ResolumeClient } from "../resolume-client.js";
+import type { DashboardParam } from "../types.js";
 
 // ── stubs ─────────────────────────────────────────────────────────────────────
 
-function makeViewport(): Pick<Viewport, "scrollClips" | "scrollLayers"> {
-  return {
-    scrollClips: vi.fn(),
-    scrollLayers: vi.fn(),
-  };
+class MockClient extends EventEmitter {
+  setParameterById = vi.fn();
+  resetParameterById = vi.fn();
 }
 
-function makeClient(
-  currentOpacity = 0.8
-): Pick<ResolumeClient, "getLayerOpacity" | "setLayerOpacity"> {
-  return {
-    getLayerOpacity: vi.fn().mockResolvedValue(currentOpacity),
-    setLayerOpacity: vi.fn().mockResolvedValue(undefined),
-  };
+function makeClient() {
+  return new MockClient() as unknown as ResolumeClient & MockClient;
 }
 
-function make(opacity = 0.8) {
-  const viewport = makeViewport();
-  const client = makeClient(opacity);
-  const handler = new KnobHandler(
-    viewport as unknown as Viewport,
-    client as unknown as ResolumeClient
-  );
-  return { viewport, client, handler };
+function makeParam(overrides: Partial<DashboardParam> = {}): DashboardParam {
+  return { id: 42, name: "Link 1", min: 0, max: 1, value: 0.5, ...overrides };
 }
 
-// ── dial 0 — scroll clips ─────────────────────────────────────────────────────
+function make(param: DashboardParam | null = makeParam()) {
+  const client = makeClient();
+  const handler = new KnobHandler(client as unknown as ResolumeClient);
+  handler.assignDial(0, param);
+  return { client, handler };
+}
 
-describe("onDialRotate: dial 0 (scrollClips)", () => {
-  it("calls viewport.scrollClips with ticks value", async () => {
-    const { viewport, handler } = make();
+// ── assignDial ────────────────────────────────────────────────────────────────
+
+describe("assignDial", () => {
+  it("assigns a param to a dial", async () => {
+    const { client, handler } = make(makeParam({ id: 7, value: 0.2 }));
+    await handler.onDialRotate(0, 1);
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(7, expect.any(Number));
+  });
+
+  it("unassigns a dial when null is passed", async () => {
+    const { client, handler } = make();
+    handler.assignDial(0, null);
+    await handler.onDialRotate(0, 1);
+    expect((client as unknown as MockClient).setParameterById).not.toHaveBeenCalled();
+  });
+
+  it("can assign different dials independently", async () => {
+    const client = makeClient();
+    const handler = new KnobHandler(client as unknown as ResolumeClient);
+    handler.assignDial(0, makeParam({ id: 10, value: 0.5 }));
+    handler.assignDial(2, makeParam({ id: 20, value: 0.5 }));
+
+    await handler.onDialRotate(0, 1);
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(10, expect.any(Number));
+
+    (client as unknown as MockClient).setParameterById.mockClear();
+
+    await handler.onDialRotate(2, 1);
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(20, expect.any(Number));
+  });
+});
+
+// ── onDialRotate ──────────────────────────────────────────────────────────────
+
+describe("onDialRotate", () => {
+  it("moves value by 1/20th of range per tick", async () => {
+    const { client, handler } = make(makeParam({ min: 0, max: 1, value: 0.5 }));
+    await handler.onDialRotate(0, 1);
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(42, 0.55);
+  });
+
+  it("moves negative for negative ticks", async () => {
+    const { client, handler } = make(makeParam({ min: 0, max: 1, value: 0.5 }));
+    await handler.onDialRotate(0, -1);
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(42, 0.45);
+  });
+
+  it("scales by tick count", async () => {
+    const { client, handler } = make(makeParam({ min: 0, max: 1, value: 0.5 }));
     await handler.onDialRotate(0, 3);
-    expect(viewport.scrollClips).toHaveBeenCalledWith(3);
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(42, 0.65);
   });
 
-  it("passes negative ticks for reverse scroll", async () => {
-    const { viewport, handler } = make();
-    await handler.onDialRotate(0, -2);
-    expect(viewport.scrollClips).toHaveBeenCalledWith(-2);
+  it("clamps at max", async () => {
+    const { client, handler } = make(makeParam({ min: 0, max: 1, value: 0.99 }));
+    await handler.onDialRotate(0, 5);
+    const val = (client as unknown as MockClient).setParameterById.mock.calls[0][1] as number;
+    expect(val).toBeLessThanOrEqual(1);
   });
 
-  it("does not touch scrollLayers", async () => {
-    const { viewport, handler } = make();
+  it("clamps at min", async () => {
+    const { client, handler } = make(makeParam({ min: 0, max: 1, value: 0.01 }));
+    await handler.onDialRotate(0, -5);
+    const val = (client as unknown as MockClient).setParameterById.mock.calls[0][1] as number;
+    expect(val).toBeGreaterThanOrEqual(0);
+  });
+
+  it("uses custom min/max range for step size", async () => {
+    // range 0–100, step = 5 per tick
+    const { client, handler } = make(makeParam({ min: 0, max: 100, value: 50 }));
     await handler.onDialRotate(0, 1);
-    expect(viewport.scrollLayers).not.toHaveBeenCalled();
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(42, 55);
   });
 
-  it("does not touch client when dial 0 rotates", async () => {
-    const { client, handler } = make();
+  it("no-op on unassigned dial", async () => {
+    const { client, handler } = make(null);
     await handler.onDialRotate(0, 1);
-    expect(client.getLayerOpacity).not.toHaveBeenCalled();
-    expect(client.setLayerOpacity).not.toHaveBeenCalled();
-  });
-});
-
-// ── dial 1 — scroll layers ────────────────────────────────────────────────────
-
-describe("onDialRotate: dial 1 (scrollLayers)", () => {
-  it("calls viewport.scrollLayers with ticks value", async () => {
-    const { viewport, handler } = make();
-    await handler.onDialRotate(1, 2);
-    expect(viewport.scrollLayers).toHaveBeenCalledWith(2);
+    expect((client as unknown as MockClient).setParameterById).not.toHaveBeenCalled();
   });
 
-  it("passes negative ticks for reverse scroll", async () => {
-    const { viewport, handler } = make();
-    await handler.onDialRotate(1, -1);
-    expect(viewport.scrollLayers).toHaveBeenCalledWith(-1);
-  });
-
-  it("does not touch scrollClips", async () => {
-    const { viewport, handler } = make();
-    await handler.onDialRotate(1, 1);
-    expect(viewport.scrollClips).not.toHaveBeenCalled();
-  });
-
-  it("does not touch client when dial 1 rotates", async () => {
-    const { client, handler } = make();
-    await handler.onDialRotate(1, 1);
-    expect(client.setLayerOpacity).not.toHaveBeenCalled();
-  });
-});
-
-// ── dial 2 — opacity ──────────────────────────────────────────────────────────
-
-describe("onDialRotate: dial 2 (opacity)", () => {
-  it("reads current opacity then sets opacity +5% per tick", async () => {
-    const { client, handler } = make(0.5);
-    await handler.onDialRotate(2, 1);
-    expect(client.getLayerOpacity).toHaveBeenCalledWith(1); // default target layer
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(1, 0.55);
-  });
-
-  it("applies negative delta for reverse rotation", async () => {
-    const { client, handler } = make(0.5);
-    await handler.onDialRotate(2, -1);
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(1, 0.45);
-  });
-
-  it("scales delta by tick count (2 ticks = +10%)", async () => {
-    const { client, handler } = make(0.4);
-    await handler.onDialRotate(2, 2);
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(1, 0.5);
-  });
-
-  it("uses the opacity target layer set by setOpacityTargetLayer", async () => {
-    const { client, handler } = make(0.7);
-    handler.setOpacityTargetLayer(4);
-    await handler.onDialRotate(2, 1);
-    expect(client.getLayerOpacity).toHaveBeenCalledWith(4);
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(4, expect.any(Number));
-  });
-
-  it("swallows errors from client without throwing", async () => {
-    const { client, handler } = make();
-    vi.mocked(client.getLayerOpacity).mockRejectedValueOnce(new Error("network"));
-    await expect(handler.onDialRotate(2, 1)).resolves.toBeUndefined();
-  });
-
-  it("does not touch viewport scroll methods", async () => {
-    const { viewport, handler } = make();
-    await handler.onDialRotate(2, 1);
-    expect(viewport.scrollClips).not.toHaveBeenCalled();
-    expect(viewport.scrollLayers).not.toHaveBeenCalled();
-  });
-});
-
-// ── dial 3 — reserved ────────────────────────────────────────────────────────
-
-describe("onDialRotate: dial 3 (reserved)", () => {
-  it("does not throw", async () => {
-    const { handler } = make();
-    await expect(handler.onDialRotate(3, 5)).resolves.toBeUndefined();
-  });
-
-  it("does not call any viewport or client methods", async () => {
-    const { viewport, client, handler } = make();
+  it("no-op on unrelated dial index", async () => {
+    const { client, handler } = make(); // dial 0 assigned
     await handler.onDialRotate(3, 1);
-    expect(viewport.scrollClips).not.toHaveBeenCalled();
-    expect(viewport.scrollLayers).not.toHaveBeenCalled();
-    expect(client.setLayerOpacity).not.toHaveBeenCalled();
-    expect(client.getLayerOpacity).not.toHaveBeenCalled();
+    expect((client as unknown as MockClient).setParameterById).not.toHaveBeenCalled();
   });
 });
 
 // ── onDialPress ───────────────────────────────────────────────────────────────
 
-describe("onDialPress: dial 2 (reset opacity)", () => {
-  it("resets opacity to 1.0 on the target layer", async () => {
-    const { client, handler } = make();
-    await handler.onDialPress(2);
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(1, 1.0);
+describe("onDialPress", () => {
+  it("calls resetParameterById with the assigned param id", async () => {
+    const { client, handler } = make(makeParam({ id: 42 }));
+    await handler.onDialPress(0);
+    expect((client as unknown as MockClient).resetParameterById).toHaveBeenCalledWith(42);
   });
 
-  it("resets opacity on the custom target layer", async () => {
-    const { client, handler } = make();
-    handler.setOpacityTargetLayer(3);
-    await handler.onDialPress(2);
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(3, 1.0);
+  it("no-op on unassigned dial", async () => {
+    const { client, handler } = make(null);
+    await handler.onDialPress(0);
+    expect((client as unknown as MockClient).resetParameterById).not.toHaveBeenCalled();
   });
 
-  it("swallows errors from client without throwing", async () => {
-    const { client, handler } = make();
-    vi.mocked(client.setLayerOpacity).mockRejectedValueOnce(new Error("fail"));
-    await expect(handler.onDialPress(2)).resolves.toBeUndefined();
+  it("no-op on unrelated dial index", async () => {
+    const { client, handler } = make(); // dial 0 assigned
+    await handler.onDialPress(2);
+    expect((client as unknown as MockClient).resetParameterById).not.toHaveBeenCalled();
   });
 });
 
-describe("onDialPress: other dials (no-op)", () => {
-  it.each([0, 1, 3])("dial %i press does not throw", async (dial) => {
-    const { handler } = make();
-    await expect(handler.onDialPress(dial)).resolves.toBeUndefined();
+// ── paramUpdate live sync ─────────────────────────────────────────────────────
+
+describe("paramUpdate event sync", () => {
+  it("updates cached value when client emits paramUpdate for assigned param", async () => {
+    const client = makeClient();
+    const handler = new KnobHandler(client as unknown as ResolumeClient);
+    handler.assignDial(0, makeParam({ id: 42, min: 0, max: 1, value: 0.5 }));
+
+    // Simulate Resolume pushing a new value
+    (client as unknown as EventEmitter).emit("paramUpdate", { id: 42, value: 0.8 });
+
+    await handler.onDialRotate(0, 1); // should start from 0.8 now
+    const val = (client as unknown as MockClient).setParameterById.mock.calls[0][1] as number;
+    expect(val).toBeCloseTo(0.85, 5);
   });
 
-  it.each([0, 1, 3])("dial %i press does not call setLayerOpacity", async (dial) => {
-    const { client, handler } = make();
-    await handler.onDialPress(dial);
-    expect(client.setLayerOpacity).not.toHaveBeenCalled();
-  });
-});
+  it("ignores paramUpdate for a different param id", async () => {
+    const client = makeClient();
+    const handler = new KnobHandler(client as unknown as ResolumeClient);
+    handler.assignDial(0, makeParam({ id: 42, min: 0, max: 1, value: 0.5 }));
 
-// ── setOpacityTargetLayer ─────────────────────────────────────────────────────
+    (client as unknown as EventEmitter).emit("paramUpdate", { id: 99, value: 0.0 });
 
-describe("setOpacityTargetLayer", () => {
-  it("defaults to layer 1", async () => {
-    const { client, handler } = make();
-    await handler.onDialPress(2);
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(1, 1.0);
-  });
-
-  it("can be updated multiple times", async () => {
-    const { client, handler } = make();
-    handler.setOpacityTargetLayer(2);
-    handler.setOpacityTargetLayer(5);
-    await handler.onDialPress(2);
-    expect(client.setLayerOpacity).toHaveBeenCalledWith(5, 1.0);
+    await handler.onDialRotate(0, 1); // should still start from 0.5
+    expect((client as unknown as MockClient).setParameterById).toHaveBeenCalledWith(42, 0.55);
   });
 });

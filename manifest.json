@@ -2,10 +2,10 @@
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "UUID": "com.cooperbrislain.resolume-grid",
   "Name": "Resolume Grid",
-  "Version": "0.1.0.0",
+  "Version": "0.3.0.0",
   "Author": "Cooper Brislain",
   "Description": "Live clip thumbnails and triggering for Resolume Arena/Avenue on Stream Deck",
-  "Category": "Resolume",
+  "Category": "Resolume Grid",
   "CategoryIcon": "imgs/category-icon",
   "CodePath": "dist/plugin.js",
   "Icon": "imgs/plugin-icon",
@@ -17,33 +17,119 @@
     "Version": "20"
   },
   "OS": [
-    { "Platform": "mac", "MinimumVersion": "10.15" },
-    { "Platform": "windows", "MinimumVersion": "10" }
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.15"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
   ],
   "Actions": [
     {
       "UUID": "com.cooperbrislain.resolume-grid.clip",
       "Name": "Resolume Clip",
-      "Icon": "imgs/action-icon",
+      "Icon": "imgs/clip-icon",
       "SupportedInMultiActions": false,
-      "Controllers": ["Keypad", "Encoder"],
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/clip-icon",
+          "TitleAlignment": "bottom",
+          "FontSize": 10
+        }
+      ],
+      "VisibleInActionsList": true,
+      "PropertyInspectorPath": "property-inspector/clip.html"
+    },
+    {
+      "UUID": "com.cooperbrislain.resolume-grid.bank",
+      "Name": "Deck Navigator",
+      "Icon": "imgs/deck-icon",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Encoder"
+      ],
       "Encoder": {
-        "layout": "$B1",
+        "layout": "$A1",
         "TriggerDescription": {
-          "Rotate": "Scroll clips / layers",
-          "Push": "Reset opacity",
-          "Touch": "Trigger clip",
-          "LongTouch": "Reset viewport"
+          "Rotate": "Browse decks",
+          "Push": "Switch to deck"
         }
       },
       "States": [
         {
-          "Image": "imgs/action-icon",
-          "TitleAlignment": "bottom",
-          "FontSize": "10"
+          "Image": "imgs/deck-icon"
         }
       ],
-      "PropertyInspectorPath": "property-inspector/index.html"
+      "VisibleInActionsList": true,
+      "PropertyInspectorPath": "property-inspector/bank.html"
+    },
+    {
+      "UUID": "com.cooperbrislain.resolume-grid.layer",
+      "Name": "Layer Navigator",
+      "Icon": "imgs/layer-icon",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Encoder"
+      ],
+      "Encoder": {
+        "layout": "$A1",
+        "TriggerDescription": {
+          "Rotate": "Browse layers",
+          "Push": "Select layer"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/layer-icon"
+        }
+      ],
+      "VisibleInActionsList": true,
+      "PropertyInspectorPath": "property-inspector/layer.html"
+    },
+    {
+      "UUID": "com.cooperbrislain.resolume-grid.refresh",
+      "Name": "Refresh Clips",
+      "Icon": "imgs/refresh-icon",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/refresh-icon",
+          "Title": "Refresh"
+        }
+      ],
+      "VisibleInActionsList": true,
+      "PropertyInspectorPath": "property-inspector/refresh.html"
+    },
+    {
+      "UUID": "com.cooperbrislain.resolume-grid.link",
+      "Name": "Parameter",
+      "Icon": "imgs/link-icon",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Encoder"
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Adjust parameter value",
+          "Push": "Reset to default"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/link-icon"
+        }
+      ],
+      "VisibleInActionsList": true,
+      "PropertyInspectorPath": "property-inspector/link.html"
     }
   ]
 }

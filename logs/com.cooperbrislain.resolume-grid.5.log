@@ -1,0 +1,11 @@
+2026-04-20T06:10:34.895Z ERROR Process encountered uncaught exception 
+Error: Unable to establish a connection with Stream Deck, missing command line arguments: -port, -pluginUUID, -registerEvent, -info
+    at Connection.getRegistrationParameters (file:///Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/@elgato/streamdeck/dist/plugin/connection.js:125:19)
+    at get registrationParameters (file:///Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/@elgato/streamdeck/dist/plugin/connection.js:35:55)
+    at Connection.connect (file:///Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/@elgato/streamdeck/dist/plugin/connection.js:52:68)
+    at Object.connect (file:///Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/node_modules/@elgato/streamdeck/dist/plugin/index.js:85:27)
+    at file:///Users/spaceboycoop/Code/com.cooperbrislain.resolume-grid.sdPlugin/dist/plugin.js:231:12
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:639:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)

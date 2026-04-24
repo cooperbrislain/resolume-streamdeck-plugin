@@ -1,4 +1,5 @@
-import { createCanvas, loadImage, CanvasRenderingContext2D } from "canvas";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
+import type { SKRSContext2D } from "@napi-rs/canvas";
 import { RenderClipOptions } from "./types.js";
 
 const SIZE = 120;
@@ -36,12 +37,12 @@ export class ButtonRenderer {
 
   // ── Rendering layers ───────────────────────────────────────────────────────
 
-  private drawBackground(ctx: CanvasRenderingContext2D, isEmpty: boolean): void {
+  private drawBackground(ctx: SKRSContext2D, isEmpty: boolean): void {
     ctx.fillStyle = isEmpty ? "#1a1a1a" : "#000000";
     ctx.fillRect(0, 0, SIZE, SIZE);
   }
 
-  private drawDotPattern(ctx: CanvasRenderingContext2D): void {
+  private drawDotPattern(ctx: SKRSContext2D): void {
     ctx.fillStyle = "#333333";
     for (let y = DOT_SPACING; y < SIZE; y += DOT_SPACING) {
       for (let x = DOT_SPACING; x < SIZE; x += DOT_SPACING) {
@@ -53,7 +54,7 @@ export class ButtonRenderer {
   }
 
   private async drawThumbnail(
-    ctx: CanvasRenderingContext2D,
+    ctx: SKRSContext2D,
     thumb: string
   ): Promise<void> {
     try {
@@ -78,14 +79,14 @@ export class ButtonRenderer {
     }
   }
 
-  private drawConnectedBorder(ctx: CanvasRenderingContext2D): void {
+  private drawConnectedBorder(ctx: SKRSContext2D): void {
     ctx.strokeStyle = "#00cc44";
     ctx.lineWidth = BORDER_WIDTH;
     const half = BORDER_WIDTH / 2;
     ctx.strokeRect(half, half, SIZE - BORDER_WIDTH, SIZE - BORDER_WIDTH);
   }
 
-  private drawLabel(ctx: CanvasRenderingContext2D, name: string): void {
+  private drawLabel(ctx: SKRSContext2D, name: string): void {
     const y = SIZE - LABEL_HEIGHT;
 
     // Semi-transparent backing strip
@@ -102,7 +103,7 @@ export class ButtonRenderer {
   }
 
   private truncate(
-    ctx: CanvasRenderingContext2D,
+    ctx: SKRSContext2D,
     text: string,
     maxWidth: number
   ): string {
