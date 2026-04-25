@@ -28,6 +28,14 @@ import type {
   LayerSelectedEvent, LinkSettings,
 } from "./types.js";
 
+client.on("deckColorChanged", async () => {
+  await updateDeckDisplays();
+});
+
+client.on("layerColorChanged", async () => {
+  await updateLayerDisplays();
+});
+
 // Knob handler → link feedback
 knobHandler.onValueChanged = (dialIndex) => { void updateLinkFeedback(dialIndex); };
 

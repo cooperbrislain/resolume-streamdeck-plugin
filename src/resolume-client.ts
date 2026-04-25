@@ -37,6 +37,8 @@ import {
   ConnectedState,
   DeckChangedEvent,
   LayerSelectedEvent,
+  DeckColorChangedEvent,
+  LayerColorChangedEvent,
 } from "./types.js";
 
 // ── Tuning knobs ──────────────────────────────────────────────────────────────
@@ -62,6 +64,8 @@ export declare interface ResolumeClient {
   on(event: "paramUpdate",      listener: (e: { id: number; value: number }) => void): this;
   on(event: "deckChanged",      listener: (e: DeckChangedEvent) => void): this;
   on(event: "layerSelected",    listener: (e: LayerSelectedEvent) => void): this;
+  on(event: "deckColorChanged", listener: (e: DeckColorChangedEvent) => void): this;
+  on(event: "layerColorChanged",listener: (e: LayerColorChangedEvent) => void): this;
   on(event: string, listener: (...args: unknown[]) => void): this;
 }
 
@@ -81,6 +85,8 @@ export class ResolumeClient extends EventEmitter {
   private deckSelectedParamIds   = new Map<number, number>(); // paramId → 0-based deck index
   private layerSelectedParamIds  = new Map<number, number>(); // paramId → 0-based layer index
   private layerSelectParamByIdx: number[] = [];               // layer index → selected param id
+  private deckColorParamIds      = new Map<number, number>(); // paramId → 0-based deck index
+  private layerColorParamIds     = new Map<number, number>(); // paramId → 0-based layer index
   private dashboardParams        = new Map<number, DashboardParam>();
   private clipParamIds           = new Map<string, Partial<Record<string, number>>>(); // "layer:clip" → {param → id}
   private layerParamIds          = new Map<number, Partial<Record<string, number>>>(); // layer → {param → id}
@@ -132,6 +138,8 @@ export class ResolumeClient extends EventEmitter {
     this.thumbnailParamIds.clear();
     this.deckSelectedParamIds.clear();
     this.layerSelectedParamIds.clear();
+    this.deckColorParamIds.clear();
+    this.layerColorParamIds.clear();
     this.dashboardParams.clear();
     this.clipParamIds.clear();
     this.layerParamIds.clear();
@@ -293,6 +301,10 @@ export class ResolumeClient extends EventEmitter {
           console.log(`[client] initial active deck: ${i} ("${d.name?.value}")`);
         }
       }
+      if (d.colorid?.id) {
+        this.deckColorParamIds.set(d.colorid.id, i);
+        this.subscribe(d.colorid.id);
+      }
       const parsedColor = d.colorid?.value ? parseInt(d.colorid.value, 10) : NaN;
       return {
         id:              d.id,
@@ -346,6 +358,10 @@ export class ResolumeClient extends EventEmitter {
         }
       });
 
+      if (layer.colorid?.id) {
+        this.layerColorParamIds.set(layer.colorid.id, li);
+        this.subscribe(layer.colorid.id);
+      }
       const parsedColor = layer.colorid?.value ? parseInt(layer.colorid.value, 10) : NaN;
       const colorIndex  = Number.isFinite(parsedColor) && parsedColor >= 1 && parsedColor <= 6
                             ? parsedColor : undefined;
@@ -509,6 +525,8 @@ export class ResolumeClient extends EventEmitter {
     if (this.handleThumbnailDirty(id))        return;
     if (this.handleDeckSelection(id, value))  return;
     if (this.handleLayerSelection(id, value)) return;
+    if (this.handleDeckColor(id, value))      return;
+    if (this.handleLayerColor(id, value))     return;
     this.handleDashboardUpdate(id, value);
   }
 
@@ -556,6 +574,30 @@ export class ResolumeClient extends EventEmitter {
     return true;
   }
 
+  private handleDeckColor(id: number, value: unknown): boolean {
+    const deckIdx = this.deckColorParamIds.get(id);
+    if (deckIdx === undefined) return false;
+    const next = parseColorIndex(value);
+    const deck = this.decks[deckIdx];
+    if (deck && deck.colorIndex !== next) {
+      deck.colorIndex = next;
+      this.emit("deckColorChanged", { deckIndex: deckIdx } satisfies DeckColorChangedEvent);
+    }
+    return true;
+  }
+
+  private handleLayerColor(id: number, value: unknown): boolean {
+    const layerIdx = this.layerColorParamIds.get(id);
+    if (layerIdx === undefined) return false;
+    const next  = parseColorIndex(value);
+    const entry = this.layerInfo[layerIdx];
+    if (entry && entry.colorIndex !== next) {
+      entry.colorIndex = next;
+      this.emit("layerColorChanged", { layerIndex: layerIdx } satisfies LayerColorChangedEvent);
+    }
+    return true;
+  }
+
   private handleDashboardUpdate(id: number, value: unknown): void {
     const dashParam = this.dashboardParams.get(id);
     if (dashParam && typeof value === "number") {
@@ -570,4 +612,12 @@ export class ResolumeClient extends EventEmitter {
 /** Resolume sends selection flags as boolean true, "true", or 1. */
 function truthy(v: unknown): boolean {
   return v === true || v === "true" || v === 1;
+}
+
+/** Coerce a colorid value (string or number) to 1–6 or undefined. */
+function parseColorIndex(v: unknown): number | undefined {
+  const n = typeof v === "number" ? v
+          : typeof v === "string" ? parseInt(v, 10)
+          : NaN;
+  return Number.isFinite(n) && n >= 1 && n <= 6 ? n : undefined;
 }

@@ -91,6 +91,14 @@ export interface LayerSelectedEvent {
   layerIndex: number;
 }
 
+export interface DeckColorChangedEvent {
+  deckIndex: number;
+}
+
+export interface LayerColorChangedEvent {
+  layerIndex: number;
+}
+
 // ── Per-button / per-dial settings ───────────────────────────────────────────
 
 /**
