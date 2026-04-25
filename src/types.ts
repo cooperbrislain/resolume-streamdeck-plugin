@@ -12,6 +12,7 @@ export interface Composition {
     closed: boolean;
     name: { value: string };
     selected: { id: number; value: boolean };
+    colorid?: { id: number; value: string };
   }>;
   columns?: Array<{
     id: number;
@@ -122,6 +123,8 @@ export interface Deck {
   name: string;
   selectedParamId: number;
   closed: boolean;
+  /** 1–6 if a tab color is set in Resolume; undefined for "no color". */
+  colorIndex?: number;
 }
 
 export type LayerParamName = "opacity" | "speed" | "volume" | "transition_duration";

@@ -293,11 +293,14 @@ export class ResolumeClient extends EventEmitter {
           console.log(`[client] initial active deck: ${i} ("${d.name?.value}")`);
         }
       }
+      const parsedColor = d.colorid?.value ? parseInt(d.colorid.value, 10) : NaN;
       return {
         id:              d.id,
         name:            d.name?.value ?? "Deck",
         selectedParamId: d.selected?.id,
         closed:          d.closed ?? false,
+        colorIndex:      Number.isFinite(parsedColor) && parsedColor >= 1 && parsedColor <= 6
+                            ? parsedColor : undefined,
       };
     });
   }
