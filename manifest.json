@@ -62,7 +62,7 @@
       },
       "States": [
         {
-          "Image": "imgs/deck-icon"
+          "Image": "imgs/blank"
         }
       ],
       "VisibleInActionsList": true,
@@ -85,7 +85,7 @@
       },
       "States": [
         {
-          "Image": "imgs/layer-icon"
+          "Image": "imgs/blank"
         }
       ],
       "VisibleInActionsList": true,
