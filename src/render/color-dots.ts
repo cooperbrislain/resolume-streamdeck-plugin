@@ -18,11 +18,8 @@ const PALETTE: Record<number, string> = {
   6: "#9b59b6", // purple
 };
 
-/** Transparent PNG used when there is no color set. */
-const BLANK_DOT: string = (() => {
-  const c = createCanvas(48, 48);
-  return c.toDataURL("image/png");
-})();
+/** Neutral gray dot used when no color is assigned in Resolume. */
+const BLANK_DOT: string = renderDot("#7f8c8d");
 
 /** Render a single colored dot once and cache its data URL. */
 function renderDot(hex: string): string {
