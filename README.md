@@ -8,6 +8,10 @@ Every key shows a live thumbnail of the clip it's bound to. Encoders navigate
 decks and layers, or link to any parameter in the composition with full-range
 feedback on the LCD strip.
 
+![Stream Deck+ showing a 2×4 clip grid with thumbnails, the encoder strip
+labelling clip Scrub, clip Speed, the active layer, and the current
+bank.](imgs/screenshots/deck-overview.png)
+
 ## Features
 
 - **Live clip thumbnails** — each key renders the current Resolume thumbnail
@@ -66,6 +70,10 @@ pinned deck), and a **column** (1-based) within that deck. Use the
 **Bind to selected** button to snap the key to the clip currently selected in
 Resolume — handy when laying out a grid by hand.
 
+![Resolume Clip property inspector showing layer, deck, deck column, the
+Bind to selected button, and the Resolume connection
+status.](imgs/screenshots/clip.png)
+
 ### Parameter
 
 The Parameter encoder can target one of three sources:
@@ -78,6 +86,10 @@ The Parameter encoder can target one of three sources:
 
 **Sensitivity** scales how much one encoder step moves the value — lower for
 fine control, higher to sweep the full range quickly.
+
+![Parameter property inspector with the Clip source selected, "Currently
+playing clip on this layer" enabled, Speed parameter, and sensitivity
+0.4×.](imgs/screenshots/clip-parameter.png)
 
 ## Development
 
