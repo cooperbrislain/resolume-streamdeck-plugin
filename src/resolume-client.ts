@@ -311,7 +311,7 @@ export class ResolumeClient extends EventEmitter {
         name:            d.name?.value ?? "Deck",
         selectedParamId: d.selected?.id,
         closed:          d.closed ?? false,
-        colorIndex:      Number.isFinite(parsedColor) && parsedColor >= 1 && parsedColor <= 6
+        colorIndex:      Number.isFinite(parsedColor) && parsedColor >= 2 && parsedColor <= 7
                             ? parsedColor : undefined,
       };
     });
@@ -363,7 +363,7 @@ export class ResolumeClient extends EventEmitter {
         this.subscribe(layer.colorid.id);
       }
       const parsedColor = layer.colorid?.value ? parseInt(layer.colorid.value, 10) : NaN;
-      const colorIndex  = Number.isFinite(parsedColor) && parsedColor >= 1 && parsedColor <= 6
+      const colorIndex  = Number.isFinite(parsedColor) && parsedColor >= 2 && parsedColor <= 7
                             ? parsedColor : undefined;
       return { name: layer.name?.value || `Layer ${li + 1}`, colorIndex };
     });
@@ -619,5 +619,5 @@ function parseColorIndex(v: unknown): number | undefined {
   const n = typeof v === "number" ? v
           : typeof v === "string" ? parseInt(v, 10)
           : NaN;
-  return Number.isFinite(n) && n >= 1 && n <= 6 ? n : undefined;
+  return Number.isFinite(n) && n >= 2 && n <= 7 ? n : undefined;
 }
