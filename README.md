@@ -142,6 +142,20 @@ npx @elgato/cli pack com.cooperbrislain.resolume-grid.sdPlugin
 - Elgato's [Stream Deck SDK v2](https://github.com/elgatosf/streamdeck) and
   plugin runtime.
 
+## AI disclosure
+
+Substantial portions of this codebase were drafted with
+[Claude Code](https://claude.com/claude-code) under my direction. Every change
+was reviewed, tested, and integrated by a human (me); the plugin is shipped and
+maintained by me, not by the model.
+
+## Trademarks
+
+Resolume® is a registered trademark of Resolume B.V. Stream Deck® and Elgato®
+are trademarks of Corsair Memory, Inc. This plugin is an independent, unofficial
+integration and is not affiliated with, endorsed by, or sponsored by Resolume
+B.V. or Corsair Memory, Inc.
+
 ## License
 
 [MIT](LICENSE)
