@@ -54,7 +54,7 @@
         "Encoder"
       ],
       "Encoder": {
-        "layout": "$A1",
+        "layout": "layouts/dot-name.json",
         "TriggerDescription": {
           "Rotate": "Browse decks",
           "Push": "Switch to deck"
@@ -77,7 +77,7 @@
         "Encoder"
       ],
       "Encoder": {
-        "layout": "$A1",
+        "layout": "layouts/dot-name.json",
         "TriggerDescription": {
           "Rotate": "Browse layers",
           "Push": "Select layer"

@@ -40,6 +40,7 @@ export interface Layer {
   audio?: { volume?: Param };
   transition?: { duration?: Param };
   selected?: { value: boolean; id: number };
+  colorid?: { id: number; value: string };
 }
 
 export interface Clip {

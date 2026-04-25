@@ -86,7 +86,7 @@ export class ResolumeClient extends EventEmitter {
   private layerParamIds          = new Map<number, Partial<Record<string, number>>>(); // layer → {param → id}
 
   private decks:                  Deck[] = [];
-  private layerInfo:              Array<{ name: string }> = [];
+  private layerInfo:              Array<{ name: string; colorIndex?: number }> = [];
   private activeDeckIndex         = 0;
   private lastSelectedLayerIndex  = 0;
 
@@ -143,7 +143,7 @@ export class ResolumeClient extends EventEmitter {
   }
 
   getDecks():      Deck[]                  { return this.decks; }
-  getLayers():     Array<{ name: string }> { return this.layerInfo; }
+  getLayers():     Array<{ name: string; colorIndex?: number }> { return this.layerInfo; }
   getDashboardParams(): DashboardParam[]   { return Array.from(this.dashboardParams.values()); }
 
   /** 0-based index of the active deck. */
@@ -346,7 +346,10 @@ export class ResolumeClient extends EventEmitter {
         }
       });
 
-      return { name: layer.name?.value || `Layer ${li + 1}` };
+      const parsedColor = layer.colorid?.value ? parseInt(layer.colorid.value, 10) : NaN;
+      const colorIndex  = Number.isFinite(parsedColor) && parsedColor >= 1 && parsedColor <= 6
+                            ? parsedColor : undefined;
+      return { name: layer.name?.value || `Layer ${li + 1}`, colorIndex };
     });
   }
 

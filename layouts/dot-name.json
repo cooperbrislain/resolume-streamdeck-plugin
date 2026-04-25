@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "dot-name",
+  "items": [
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [0, 4, 200, 16],
+      "alignment": "center",
+      "color": "#9a9a9a",
+      "font": { "size": 12, "weight": 500 }
+    },
+    {
+      "key": "icon",
+      "type": "pixmap",
+      "rect": [12, 30, 44, 44]
+    },
+    {
+      "key": "value",
+      "type": "text",
+      "rect": [64, 30, 128, 44],
+      "alignment": "left",
+      "color": "#ffffff",
+      "font": { "size": 22, "weight": 600 }
+    }
+  ]
+}
