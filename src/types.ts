@@ -132,7 +132,7 @@ export interface Deck {
   name: string;
   selectedParamId: number;
   closed: boolean;
-  /** 2–7 if a tab color is set in Resolume; undefined for "no color" (index 1). */
+  /** 2–6 if a tab color is set in Resolume; undefined for "no color" (index 1). */
   colorIndex?: number;
 }
 

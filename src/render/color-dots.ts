@@ -9,16 +9,16 @@ import { createCanvas } from "@napi-rs/canvas";
  * Resolume's actual palette is not published, so tweak here if you want a
  * different look on the encoder LCD.
  */
-// Resolume's `colorid` is 1-based, where 1 means "no color set" and 2–7 are the
-// six tab/layer highlight colors. Index 1 is intentionally absent from this map
-// so unassigned items fall through to BLANK_DOT (a neutral gray).
+// Resolume's `colorid` is 1-based, where 1 means "no color set" and 2–6 are the
+// five tab/layer highlight colors in the order shown in Resolume's color picker.
+// Index 1 is intentionally absent from this map so unassigned items fall
+// through to BLANK_DOT (a neutral gray).
 const PALETTE: Record<number, string> = {
-  2: "#e74c3c", // red
-  3: "#e67e22", // orange
-  4: "#f1c40f", // yellow
-  5: "#2ecc71", // green
-  6: "#3498db", // blue
-  7: "#9b59b6", // purple
+  2: "#c0392b", // red
+  3: "#8bc34a", // lime green
+  4: "#16a085", // teal
+  5: "#2196f3", // blue
+  6: "#d81b60", // magenta / pink
 };
 
 /** Neutral gray dot used when no color is assigned in Resolume. */
